@@ -1,0 +1,29 @@
+OverSCCed 永久部署 — GitHub Pages 静态托管（零绑卡、零新平台）
+================================================================
+
+现在的联机架构：房主浏览器 = 服务器，公共消息服务器（EMQX 中国节点）做中转。
+所以只需要"托管静态页面"，GitHub Pages 免费即可，你已有 GitHub 账号。
+
+步骤（约 3 分钟）：
+1. 打开你的 overscced 仓库页面（github.com/你的用户名/overscced）
+2. 确认仓库里有这些新文件（没有就按之前的方法拖拽上传）：
+   mqtt.min.js、mqtt_host.js、net.js（新版）、index.html（新版）、
+   rules.js、config.js、assets/
+3. 点仓库顶部 Settings（设置）→ 左侧 Pages
+4. Source 选 "Deploy from a branch" → 分支选 main（或 master）→ 文件夹选 / (root) → Save
+5. 等 1 分钟，页面顶部会显示你的网址：
+   https://你的用户名.github.io/overscced/
+6. 打开测试：看到 OverSCCed 大厅即成功
+
+使用：所有人打开同一网址 → 房主 Create room → 其他输入 4 位房号加入。
+房主浏览器需保持打开（房主关页面 = 房间消失，这是"房主即服务器"的特性）。
+
+备选静态托管（如果 github.io 在部分网络下打不开）：
+- Cloudflare Pages：免费，注册不绑卡，连 GitHub 仓库一键部署，国内访问通常更快
+- Netlify：免费，注册不绑卡
+
+局域网/本机测试：
+- 双击 index.html 即可（file:// 打开也能联机，走 EMQX 中转）
+- 或运行 node server/server.js 后用 http://localhost:3000
+
+更新游戏：GitHub 仓库重新上传新文件 → Pages 自动更新（1-2 分钟）。
