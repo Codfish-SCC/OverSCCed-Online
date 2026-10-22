@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>OverSCCed 入口</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+         margin: 0; background: #fff; color: #1a1a1a; }
+  #splash { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff;
+            display: flex; align-items: center; justify-content: center; z-index: 10;
+            transition: opacity .5s ease; }
+  #splash.hide { opacity: 0; pointer-events: none; }
+  .inner { text-align: center; padding: 24px; }
+  .logo { font-size: 64px; font-weight: 800; letter-spacing: 3px; line-height: 1.1;
+          animation: in 1s ease both; }
+  .sub { color: #6e6e6e; font-size: 13px; letter-spacing: 4px; margin-top: 12px;
+         animation: in 1s .25s ease both; }
+  .status { margin-top: 34px; font-size: 14px; color: #6e6e6e; animation: in 1s .5s ease both; }
+  .dots::after { content: ""; animation: dc 1.4s infinite; }
+  @keyframes dc { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+  @keyframes in { from { opacity: 0; transform: translateY(22px) scale(.95); } to { opacity: 1; transform: none; } }
+  button { font-size: 15px; font-weight: 700; padding: 11px 26px; border-radius: 10px;
+           border: 1px solid #1a1a1a; background: #1a1a1a; color: #fff; cursor: pointer; margin-top: 18px; }
+</style>
+</head>
+<body>
+  <div id="splash">
+    <div class="inner">
+      <div class="logo">OverSCCed</div>
+      <div class="sub">ONLINE BOARD GAME</div>
+      <div class="status"><span id="statusText">正在查找最新服务器…</span><span class="dots"></span></div>
+      <button id="btn" onclick="retry()" style="display:none">重新查找</button>
+    </div>
+  </div>
+<script src="mqtt_browser.js?v=28"></script>
+<script>
+var found = null, tried = 0, done = false;
+function setText(t) { document.getElementById("statusText").textContent = t; }
+function check() {
+  var c = mqtt.connect("wss://broker-cn.emqx.io:8084/mqtt", { clientId: "go-" + Math.random().toString(36).slice(2, 10) });
+  var to = setTimeout(function () { try { c.end(); } catch (e) {} finish(); }, 8000);
+  c.on("message", function (t, p) {
+    if (t !== "overscced/v1/url" || done) return;
+    try {
+      var o = JSON.parse(new TextDecoder().decode(p));
+      if (o && o.url && Date.now() - (o.ts || 0) < 1800000) {
+        done = true;
+        clearTimeout(to);
+        try { c.end(); } catch (e) {}
+        found = o.url;
+        setText("服务器在线！正在进入游戏…");
+        setTimeout(function () { location.replace("index.html?server=" + encodeURIComponent(found)); }, 1100);
+      }
+    } catch (e) {}
+  });
+  c.on("connect", function () { c.subscribe("overscced/v1/url", { qos: 0 }); });
+  c.on("error", function () {});
+}
+function finish() {
+  if (done) return;
+  tried++;
+  if (tried < 3) { setText("还在查找…（第 " + tried + " 次）"); setTimeout(check, 3000); }
+  else {
+    setText("服务器暂未开启");
+    document.getElementById("btn").style.display = "inline-block";
+  }
+}
+function retry() {
+  done = false; tried = 0;
+  document.getElementById("btn").style.display = "none";
+  setText("正在查找最新服务器…");
+  check();
+}
+check();
+</script>
+</body>
+</html>
